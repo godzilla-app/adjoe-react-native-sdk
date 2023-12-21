@@ -1,0 +1,22 @@
+{
+  "name": "react-native-adjoe-sdk",
+  "version": "2.1.1",
+  "description": "",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "react-native"
+  ],
+  "author": "",
+  "license": "",
+  "peerDependencies": {
+    "react": "*",
+    "react-native": "*"
+  },
+  "devDependencies": {
+    "clean-publish": "^1.1.8",
+    "publish-variants": "^1.0.4"
+  }
+}

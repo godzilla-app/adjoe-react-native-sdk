@@ -1,0 +1,40 @@
+buildscript {
+    repositories {
+        google()
+        jcenter()
+    }
+
+    dependencies {
+        classpath 'com.android.tools.build:gradle:4.2.2'
+    }
+}
+
+apply plugin: 'com.android.library'
+
+android {
+    compileSdkVersion 31
+
+    defaultConfig {
+        minSdkVersion 21
+        targetSdkVersion 31
+        versionCode 1
+        versionName "1.0"
+    }
+    lintOptions {
+        abortOnError false
+    }
+}
+
+repositories {
+    mavenCentral()
+    maven {
+        url  "https://releases.adjoe.io/maven"
+    }
+    google()
+    jcenter()
+}
+
+dependencies {
+    implementation 'com.facebook.react:react-native:0.72.7'
+    implementation 'io.adjoe:adjoe-sdk-android:2.1.1'
+}
