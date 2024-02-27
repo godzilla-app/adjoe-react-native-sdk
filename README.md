@@ -8,15 +8,27 @@ To integrate the adjoe React Native module into your React Native project, follo
 
 1. Open your project's `package.json` file.
 
-2. Add the adjoe as a dependency under the `dependencies` section:
+2. Add the adjoe as a dependency under the `dependencies` section. You can change the version number to the desired version of adjoe SDK you want to integrate.
 
 ```yaml
 dependencies: {
-  "react-native-adjoe-sdk": "https://github.com/adjoeio/adjoe-react-native-sdk"
+  "react-native-adjoe-sdk": "https://github.com/adjoeio/adjoe-react-native-sdk#v2.1.1"
 }
 
 ```
-3. save the `package.json` and run the following command:
+3. Open your `build.gradle` file in android folder and add the following section:
+
+```yaml
+allprojects {
+    repositories {
+        maven {
+            url  "https://releases.adjoe.io/maven"
+        }
+    }
+}
+```
+
+4. Run the following command:
 ```
 npm install
 ```
