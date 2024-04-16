@@ -36,5 +36,5 @@ repositories {
 
 dependencies {
     implementation 'com.facebook.react:react-native:0.72.7'
-    implementation 'io.adjoe:adjoe-sdk-android:2.1.1'
+    implementation 'io.adjoe:adjoe-sdk-android:2.2.1.1'
 }

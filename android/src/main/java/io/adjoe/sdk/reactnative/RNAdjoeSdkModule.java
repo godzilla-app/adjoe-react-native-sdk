@@ -42,7 +42,6 @@ import io.adjoe.sdk.AdjoeParams;
 import io.adjoe.sdk.AdjoePartnerApp;
 import io.adjoe.sdk.AdjoePayoutError;
 import io.adjoe.sdk.AdjoePayoutListener;
-import io.adjoe.sdk.AdjoePhoneVerification;
 import io.adjoe.sdk.AdjoePromoEvent;
 import io.adjoe.sdk.AdjoeRewardListener;
 import io.adjoe.sdk.AdjoeRewardResponse;
@@ -65,7 +64,6 @@ public class RNAdjoeSdkModule extends ReactContextBaseJavaModule {
 
     static final Map<String, AdjoePartnerApp> PARTNER_APPS = new HashMap<>();
     static WebViewSupplier webViewSupplier;
-    private static AdjoePhoneVerification phoneVerification;
     private static PhoneVerificationSupplier phoneVerificationSupplier;
     private final ReactApplicationContext reactContext;
 
@@ -123,24 +121,6 @@ public class RNAdjoeSdkModule extends ReactContextBaseJavaModule {
 
     public static void setPhoneVerificationSupplier(PhoneVerificationSupplier supplier) {
         RNAdjoeSdkModule.phoneVerificationSupplier = supplier;
-    }
-
-    public static void onActivityResult(Activity activity, int requestCode, int resultCode, Intent data) {
-        if (phoneVerification != null) {
-            phoneVerification.onActivityResult(activity, requestCode, resultCode, data);
-        }
-    }
-
-    public static void onResume(Activity activity) {
-        if (phoneVerification != null) {
-            phoneVerification.onResume(activity);
-        }
-    }
-
-    public static void onDestroy(Activity activity) {
-        if (phoneVerification != null) {
-            phoneVerification.onDestroy(activity);
-        }
     }
 
     public static void setRecommendedAppsActivity(Context context, Class<? extends Activity> activity) throws RNAdjoeSdkException {
@@ -314,6 +294,10 @@ public class RNAdjoeSdkModule extends ReactContextBaseJavaModule {
         }
     }
 
+    /**
+     * @deprecated Use the option parameter in init method to pass the profile data instead.
+     */
+    @Deprecated
     @ReactMethod
     public void setProfile(String source, String genderString, String birthdayString, ReadableMap paramsMap, Promise promise) {
         AdjoeGender gender = AdjoeGender.UNKNOWN;
@@ -766,225 +750,6 @@ public class RNAdjoeSdkModule extends ReactContextBaseJavaModule {
       ADVANCED INTEGRATION METHODS END
        ----------------------------- */
 
-    /* -----------------------------
-          PHONE VERIFICATION START
-       ----------------------------- */
-
-    @ReactMethod
-    public void pvInitialize(String appHash, final Promise promise) {
-        try {
-            phoneVerification = new AdjoePhoneVerification(appHash, new AdjoePhoneVerification.Callback() {
-
-                @Override
-                public void onError(AdjoeException e) {
-                    promise.reject("0", e.getMessage(), e);
-                }
-
-                @Override
-                public void onSmsTimeout() {
-                    promise.reject("1", "sms_timeout");
-                }
-
-                @Override
-                public void onRequestHintFailure(AdjoeException e) {
-                    promise.reject("2", "request_hint_failure", e);
-                }
-
-                @Override
-                public void onRequestHintNotAvailable() {
-                    promise.reject("3", "request_hint_not_available");
-                }
-
-                @Override
-                public void onRequestHintOtherAccount() {
-                    promise.reject("4", "request_hint_other_account");
-                }
-
-                @Override
-                public void onCannotExtractCode() {
-                    promise.reject("5", "cannot_extract_code");
-                }
-            });
-        } catch (AdjoeNotInitializedException e) {
-            promise.reject(e);
-        }
-    }
-
-    @ReactMethod
-    public void pvSetAppHash(String appHash, Promise promise) {
-        if (phoneVerification == null) {
-            promise.reject("0", "You must call pvInitialize first");
-            return;
-        }
-
-        phoneVerification.setAppHash(appHash);
-    }
-
-    @ReactMethod
-    public void pvSetCheckCallback(final Promise promise) {
-        if (phoneVerification == null) {
-            promise.reject("0", "You must call pvInitialize first");
-            return;
-        }
-
-        phoneVerification.setCheckCallback(new AdjoePhoneVerification.CheckCallback() {
-
-            @Override
-            public void onSuccess() {
-                promise.resolve(null);
-            }
-
-            @Override
-            public void onAlreadyVerified() {
-                promise.reject("1", "already_verified");
-            }
-
-            @Override
-            public void onAlreadyTaken() {
-                promise.reject("2", "already_taken");
-            }
-
-            @Override
-            public void onTooManyAttempts() {
-                promise.reject("3", "too_many_attempts");
-            }
-
-            @Override
-            public void onInvalidCountryCode() {
-                promise.reject("4", "invalid_country_code");
-            }
-
-            @Override
-            public void onError(AdjoeException e) {
-                promise.reject("0", e.getMessage(), e);
-            }
-        });
-    }
-
-    @ReactMethod
-    public void pvSetVerifyCallback(final Promise promise) {
-        if (phoneVerification == null) {
-            promise.reject("0", "You must call pvInitialize first");
-            return;
-        }
-
-        phoneVerification.setVerifyCallback(new AdjoePhoneVerification.VerifyCallback() {
-
-            @Override
-            public void onVerified() {
-                promise.resolve(null);
-            }
-
-            @Override
-            public void onInvalidCode() {
-                promise.reject("1", "invalid_code");
-            }
-
-            @Override
-            public void onTooManyAttempts() {
-                promise.reject("2", "too_many_attempts");
-            }
-
-            @Override
-            public void onMaxAllowedDevicesReached() {
-                promise.reject("3", "max_allowed_devices_reached");
-            }
-
-            @Override
-            public void onError(AdjoeException e) {
-                promise.reject("0", e.getMessage(), e);
-            }
-        });
-    }
-
-    @ReactMethod
-    public void pvGetStatus(final Promise promise) {
-        if (phoneVerification == null) {
-            promise.reject("0", "You must call pvInitialize first");
-            return;
-        }
-
-        phoneVerification.getStatus(reactContext, new AdjoePhoneVerification.StatusCallback() {
-
-            @Override
-            public void onVerified() {
-                promise.resolve(true);
-            }
-
-            @Override
-            public void onNotVerified() {
-                promise.resolve(false);
-            }
-
-            @Override
-            public void onError(AdjoeException e) {
-                promise.reject("0", e.getMessage(), e);
-            }
-        });
-    }
-
-    @ReactMethod
-    public void pvStartManual(String phoneNumber, Promise promise) {
-        if (phoneVerification == null) {
-            promise.reject("0", "You must call pvInitialize first");
-            return;
-        }
-
-        phoneVerification.startManual(reactContext, phoneNumber);
-    }
-
-    @ReactMethod
-    public void pvVerifyCode(String code, Promise promise) {
-        if (phoneVerification == null) {
-            promise.reject("0", "You must call pvInitialize first");
-            return;
-        }
-
-        phoneVerification.verifyCode(reactContext, code);
-    }
-
-    @ReactMethod
-    public void pvStartAutomatic(Promise promise) {
-        if (phoneVerification == null) {
-            promise.reject("0", "You must call pvInitialize first");
-            return;
-        }
-
-        if (phoneVerificationSupplier == null) {
-            promise.reject("0", "You must call RNAdjoeSdkModule.setPhoneVerificationSupplier first");
-            return;
-        }
-
-        if (phoneVerificationSupplier.getFragmentActivity() != null) {
-            try {
-                phoneVerification.startAutomatic(phoneVerificationSupplier.getFragmentActivity());
-            } catch (AdjoeException e) {
-                promise.reject(e);
-            }
-        } else if (phoneVerificationSupplier.getActivity() != null && phoneVerificationSupplier.getGoogleApiClient() != null) {
-            try {
-                phoneVerification.startAutomatic(phoneVerificationSupplier.getActivity(), phoneVerificationSupplier.getGoogleApiClient());
-            } catch (AdjoeException e) {
-                promise.reject(e);
-            }
-        } else {
-            promise.reject("0", "The PhoneVerificationSupplier must return a FragmentActivity or an Activity and a GoogleApiClient");
-        }
-    }
-
-    @ReactMethod
-    public void pvStartAutomaticWithPhoneNumber(String phoneNumber, Promise promise) {
-        if (phoneVerification == null) {
-            promise.reject("0", "You must call pvInitialize first");
-            return;
-        }
-
-        phoneVerification.startAutomaticWithPhoneNumber(reactContext, phoneNumber);
-    }
-
-    /* -----------------------------
-           PHONE VERIFICATION END
-       ----------------------------- */
 
     /* -----------------------------
           UTILITY METHODS START
@@ -1275,6 +1040,8 @@ public class RNAdjoeSdkModule extends ReactContextBaseJavaModule {
         if (advancePlusConfig != null) {
             WritableMap advancePlusConfigMap = Arguments.createMap();
             advancePlusConfigMap.putInt("total_coins", advancePlusConfig.getTotalCoins());
+            advancePlusConfigMap.putInt("highest_bonus_event_coins", advancePlusConfig.getHighestBonusEventCoins());
+            advancePlusConfigMap.putInt("highest_sequential_event_coins", advancePlusConfig.getHighestSequentialEventCoins());
 
             WritableArray sequentialEventsArray = Arguments.createArray();
 

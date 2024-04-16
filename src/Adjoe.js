@@ -55,6 +55,9 @@ export default {
     return RNAdjoeSdk.doPayout(adjoeParams);
   },
 
+  /**
+   * @deprecated Use the option parameter in init method to pass the profile data instead.
+   */
   setProfile: function(source, gender, birthday, params = null, uaChannel = null) {
     var adjoeParams = getAdjoeParams(params, uaChannel);
     return RNAdjoeSdk.setProfile(source, gender, birthday, adjoeParams);
@@ -97,6 +100,10 @@ export default {
   },
 
   faceVerification: function() {
+    return RNAdjoeSdk.faceVerification();
+  },
+  
+  erfanMethod: function() {
     return RNAdjoeSdk.faceVerification();
   },
 
