@@ -30,11 +30,14 @@ repositories {
     maven {
         url  "https://releases.adjoe.io/maven"
     }
+    maven {
+        url "https://pre-releases.adjoe.io/maven-pre-release"
+    }
     google()
     jcenter()
 }
 
 dependencies {
-    implementation 'com.facebook.react:react-native:0.72.7'
-    implementation 'io.adjoe:adjoe-sdk-android:2.2.2'
+    implementation 'com.facebook.react:react-android:0.72.7'
+    implementation 'io.adjoe:adjoe-sdk-android:3.0.0.1'
 }

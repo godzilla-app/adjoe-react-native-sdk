@@ -1,3 +1,2 @@
-import Adjoe from './Adjoe';
-import AdjoeNative from './AdjoeNative';
-export default { ...Adjoe, ...AdjoeNative };
+import Playtime from './Playtime';
+export default { ...Playtime };
