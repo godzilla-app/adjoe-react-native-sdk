@@ -12,7 +12,7 @@ To integrate the adjoe React Native module into your React Native project, follo
 
 ```yaml
 dependencies: {
-  "react-native-adjoe-sdk": "https://github.com/adjoeio/adjoe-react-native-sdk#VERSION"
+  "react-native-adjoe-sdk": "https://github.com/adjoeio/adjoe-react-native-sdk#v3.0.0.1"
 }
 
 ```
@@ -26,6 +26,14 @@ allprojects {
         }
     }
 }
+```
+
+Note that all stable versions have three parts, while all beta versions have four parts. If you are using a beta version of the Playtime SDK, you must change the Maven address to:
+
+```yaml
+
+            url  "https://pre-releases.adjoe.io/maven-pre-release"
+
 ```
 
 4. Run the following command:
