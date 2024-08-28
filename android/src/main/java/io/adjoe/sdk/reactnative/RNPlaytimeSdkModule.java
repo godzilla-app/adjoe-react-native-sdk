@@ -134,8 +134,8 @@ public class RNPlaytimeSdkModule extends ReactContextBaseJavaModule {
         try {
             PlaytimeOptions options = new PlaytimeOptions();
             if (optionsMap != null) {
-                if (optionsMap.hasKey("user_id")) {
-                    options.setUserId(optionsMap.getString("user_id"));
+                if (optionsMap.hasKey("userId")) {
+                    options.setUserId(optionsMap.getString("userId"));
                 }
                 if (optionsMap.hasKey("applicationProcessName")) {
                     options.setApplicationProcessName(optionsMap.getString("applicationProcessName"));
@@ -294,52 +294,6 @@ public class RNPlaytimeSdkModule extends ReactContextBaseJavaModule {
                             PARTNER_APPS.put(app.getPackageName(), app);
                         }
                         promise.resolve(apps);
-                    }
-
-                    @Override
-                    public void onCampaignsReceivedError(
-                            PlaytimeCampaignResponseError playtimeCampaignResponseError) {
-                        if (playtimeCampaignResponseError.getException() != null) {
-                            promise.reject(playtimeCampaignResponseError.getException());
-                        } else {
-                            promise.reject("", "");
-                        }
-                    }
-                });
-    }
-
-    @ReactMethod
-    public void requestCampaignApps(ReadableMap map, final Promise promise) {
-        FrameLayout webViewContainer = null;
-        if (webViewSupplier != null) {
-            webViewContainer = webViewSupplier.getLayoutForWebView();
-        }
-        PlaytimeParams params = constructPlaytimeParams(map);
-        PlaytimeCustom.requestPartnerApps(reactContext, webViewContainer, params,
-                new PlaytimeCampaignListener() {
-
-                    @Override
-                    public void onCampaignsReceived(PlaytimeCampaignResponse playtimeCampaignResponse) {
-                        final WritableMap response = Arguments.createMap();
-                        final WritableArray apps = Arguments.createArray();
-
-                        if (playtimeCampaignResponse.hasPromoEvent()) {
-                            PlaytimePromoEvent promoEvent = playtimeCampaignResponse.getPromoEvent();
-                            if (promoEvent.isRunningNow()) {
-                                response.putString("promoStartDate",
-                                        String.valueOf(promoEvent.getStartDate().getTime()));
-                                response.putString("promoEndDate",
-                                        String.valueOf(promoEvent.getEndDate().getTime()));
-                                response.putDouble("promoFactor", promoEvent.getFactor());
-                            }
-                        }
-
-                        for (PlaytimePartnerApp app : playtimeCampaignResponse.getPartnerApps()) {
-                            apps.pushMap(partnerAppToWritableMap(app));
-                            PARTNER_APPS.put(app.getPackageName(), app);
-                        }
-                        response.putArray("campaigns", apps);
-                        promise.resolve(response);
                     }
 
                     @Override

@@ -1,6 +1,6 @@
 export default {
   // functions
-  init: function(apiKey, options, uaNetwork = null, uaChannel = null) {
+  init: function(apiKey, options = null, uaNetwork = null, uaChannel = null) {
     return this.showError();
   },
 

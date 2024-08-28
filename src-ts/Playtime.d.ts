@@ -4,12 +4,12 @@ import { PlaytimeUserProfile } from './PlaytimeUserProfile';
 import { PlaytimeReward } from './PlaytimeReward';
 
 declare namespace _default {
-    function init(apiKey: string, options: {
-        user_id: string;
-        playtimeParams: PlaytimeParams;
-        applicationProcessName: string;
-        playtimeExtension: PlaytimeExtension;
-        playtimeUserProfile: PlaytimeUserProfile;
+    function init(apiKey: string, options?: {
+        userId?: string;
+        playtimeParams?: PlaytimeParams;
+        applicationProcessName?: string;
+        playtimeExtension?: PlaytimeExtension;
+        playtimeUserProfile?: PlaytimeUserProfile;
     }, uaNetwork?: string, uaChannel?: string): Promise<void>;
     function showCatalog(params?: PlaytimeParams, uaChannel?: string): Promise<void>;
     function requestRewards(params?: PlaytimeParams, uaChannel?: string): Promise<PlaytimeReward>;
