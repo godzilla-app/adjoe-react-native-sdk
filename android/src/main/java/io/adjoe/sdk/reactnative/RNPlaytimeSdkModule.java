@@ -214,8 +214,8 @@ public class RNPlaytimeSdkModule extends ReactContextBaseJavaModule {
                 if (playtimeRewardResponse != null) {
                     WritableMap map = Arguments.createMap();
                     map.putInt("reward", playtimeRewardResponse.getReward());
-                    map.putInt("already_spent", playtimeRewardResponse.getAlreadySpentCoins());
-                    map.putInt("available_for_payout",
+                    map.putInt("alreadySpent", playtimeRewardResponse.getAlreadySpentCoins());
+                    map.putInt("availableForPayout",
                             playtimeRewardResponse.getAvailablePayoutCoins());
                     promise.resolve(map);
                 } else { // should never happen
@@ -896,27 +896,34 @@ public class RNPlaytimeSdkModule extends ReactContextBaseJavaModule {
             advancePlusConfigMap.putInt("highestSequentialEventCoins",
                     advancePlusConfig.getHighestSequentialEventCoins());
 
-            WritableArray sequentialEventsArray = Arguments.createArray();
-
-            for (PlaytimeAdvancePlusEvent sequentialEvent : advancePlusConfig.getSequentialEvents()) {
-                WritableMap sequentialEventMap = Arguments.createMap();
-                sequentialEventMap.putString("name", sequentialEvent.getName());
-                sequentialEventMap.putString("description", sequentialEvent.getDescription());
-                sequentialEventMap.putInt("coins", sequentialEvent.getCoins());
-
-                String rewardedAt = sequentialEvent.getRewardedAt();
-                if (rewardedAt != null && !rewardedAt.isEmpty()) {
-                    sequentialEventMap.putString("rewardedAt", rewardedAt);
-                }
-
-                sequentialEventsArray.pushMap(sequentialEventMap);
-            }
-
+            WritableArray sequentialEventsArray = createEventsWritableArray(advancePlusConfig.getSequentialEvents());
             advancePlusConfigMap.putArray("sequentialEvents", sequentialEventsArray);
+
+            WritableArray bonusEventsArray = createEventsWritableArray(advancePlusConfig.getBonusEvents());
+            advancePlusConfigMap.putArray("bonusEvents", bonusEventsArray);
 
             appMap.putMap("advancePlusConfig", advancePlusConfigMap);
         }
         return appMap;
+    }
+
+    private WritableArray createEventsWritableArray(List<PlaytimeAdvancePlusEvent> events) {
+        WritableArray eventsArray = Arguments.createArray();
+
+        for (PlaytimeAdvancePlusEvent event : events) {
+            WritableMap eventMap = Arguments.createMap();
+            eventMap.putString("name", event.getName());
+            eventMap.putString("description", event.getDescription());
+            eventMap.putInt("coins", event.getCoins());
+
+            String rewardedAt = event.getRewardedAt();
+            if (rewardedAt != null && !rewardedAt.isEmpty()) {
+                eventMap.putString("rewardedAt", rewardedAt);
+            }
+
+            eventsArray.pushMap(eventMap);
+        }
+        return eventsArray;
     }
 
     static WritableMap rewardLevelToWritableMap(PlaytimePartnerApp.RewardLevel level) {
