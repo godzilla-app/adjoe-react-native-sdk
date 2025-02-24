@@ -213,10 +213,10 @@ public class RNPlaytimeSdkModule extends ReactContextBaseJavaModule {
             public void onUserReceivesReward(PlaytimeRewardResponse playtimeRewardResponse) {
                 if (playtimeRewardResponse != null) {
                     WritableMap map = Arguments.createMap();
-                    map.putInt("reward", playtimeRewardResponse.getReward());
-                    map.putInt("alreadySpent", playtimeRewardResponse.getAlreadySpentCoins());
+                    map.putInt("reward", playtimeRewardResponse.reward);
+                    map.putInt("alreadySpent", playtimeRewardResponse.alreadySpentCoins);
                     map.putInt("availableForPayout",
-                            playtimeRewardResponse.getAvailablePayoutCoins());
+                            playtimeRewardResponse.availablePayoutCoins);
                     promise.resolve(map);
                 } else { // should never happen
                     promise.resolve(null);
@@ -227,8 +227,8 @@ public class RNPlaytimeSdkModule extends ReactContextBaseJavaModule {
             public void onUserReceivesRewardError(
                     PlaytimeRewardResponseError playtimeRewardResponseError) {
                 if (playtimeRewardResponseError != null
-                        && playtimeRewardResponseError.getException() != null) {
-                    promise.reject(playtimeRewardResponseError.getException());
+                        && playtimeRewardResponseError.exception != null) {
+                    promise.reject(playtimeRewardResponseError.exception);
                 } else { // should never happen
                     promise.reject("", "");
                 }
@@ -288,7 +288,7 @@ public class RNPlaytimeSdkModule extends ReactContextBaseJavaModule {
                     public void onCampaignsReceived(
                             PlaytimeCampaignResponse playtimeCampaignResponse) {
                         WritableArray apps = Arguments.createArray();
-                        for (PlaytimePartnerApp app : playtimeCampaignResponse.getPartnerApps()) {
+                        for (PlaytimePartnerApp app : playtimeCampaignResponse.partnerApps) {
                             apps.pushMap(partnerAppToWritableMap(app));
 
                             PARTNER_APPS.put(app.getPackageName(), app);
@@ -299,8 +299,8 @@ public class RNPlaytimeSdkModule extends ReactContextBaseJavaModule {
                     @Override
                     public void onCampaignsReceivedError(
                             PlaytimeCampaignResponseError playtimeCampaignResponseError) {
-                        if (playtimeCampaignResponseError.getException() != null) {
-                            promise.reject(playtimeCampaignResponseError.getException());
+                        if (playtimeCampaignResponseError.exception != null) {
+                            promise.reject(playtimeCampaignResponseError.exception);
                         } else {
                             promise.reject("", "");
                         }
@@ -329,8 +329,11 @@ public class RNPlaytimeSdkModule extends ReactContextBaseJavaModule {
             webViewContainer = webViewSupplier.getLayoutForWebView();
         }
         PlaytimeParams params = constructPlaytimeParams(map);
-        partnerApp.executeClick(reactContext, webViewContainer, params,
-                new PlaytimePartnerApp.ClickListener() {
+        partnerApp.executeClick(
+            reactContext, 
+            webViewContainer, 
+            params, 
+            new PlaytimePartnerApp.ClickListener() {
 
                     @Override
                     public void onFinished() {
@@ -347,6 +350,43 @@ public class RNPlaytimeSdkModule extends ReactContextBaseJavaModule {
                     public void onAlreadyClicking() {
                         promise.resolve("already_clicking");
                     }
+                });
+    }
+
+    @ReactMethod
+    public void executeShowCampaignDetailClick(final String packageName, final Promise promise) {
+        if (packageName == null) {
+            promise.reject(new NullPointerException("package name must not be null"));
+            return;
+        }
+
+        PlaytimePartnerApp partnerApp = PARTNER_APPS.get(packageName);
+
+        if (partnerApp == null) {
+            promise.reject(new NullPointerException(
+                    "no partner app found for package name " + packageName));
+            return;
+        }
+
+        partnerApp.executeShowCampaignDetailClick(
+            reactContext, 
+            new PlaytimePartnerApp.ClickListener() {
+
+                @Override
+                public void onFinished() {
+                    promise.resolve(null);
+                }
+
+                @Override
+                public void onError() {
+                    promise.reject(
+                            new RuntimeException("Could not execute detail click for " + packageName));
+                }
+
+                @Override
+                public void onAlreadyClicking() {
+                    promise.resolve("already_clicking");
+                }
                 });
     }
 
@@ -485,7 +525,7 @@ public class RNPlaytimeSdkModule extends ReactContextBaseJavaModule {
                     @Override
                     public void onCampaignsReceived(PlaytimeCampaignResponse playtimeCampaignResponse) {
                         WritableArray apps = Arguments.createArray();
-                        for (PlaytimePartnerApp app : playtimeCampaignResponse.getPartnerApps()) {
+                        for (PlaytimePartnerApp app : playtimeCampaignResponse.partnerApps) {
                             apps.pushMap(partnerAppToWritableMap(app));
 
                             PARTNER_APPS.put(app.getPackageName(), app);
@@ -496,8 +536,8 @@ public class RNPlaytimeSdkModule extends ReactContextBaseJavaModule {
                     @Override
                     public void onCampaignsReceivedError(
                             PlaytimeCampaignResponseError playtimeCampaignResponseError) {
-                        if (playtimeCampaignResponseError.getException() != null) {
-                            promise.reject(playtimeCampaignResponseError.getException());
+                        if (playtimeCampaignResponseError.exception != null) {
+                            promise.reject(playtimeCampaignResponseError.exception);
                         } else {
                             promise.reject("", "");
                         }
