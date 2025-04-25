@@ -20,6 +20,9 @@ import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
 import com.google.android.gms.common.api.GoogleApiClient;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -527,7 +530,6 @@ public class RNPlaytimeSdkModule extends ReactContextBaseJavaModule {
                         WritableArray apps = Arguments.createArray();
                         for (PlaytimePartnerApp app : playtimeCampaignResponse.partnerApps) {
                             apps.pushMap(partnerAppToWritableMap(app));
-
                             PARTNER_APPS.put(app.getPackageName(), app);
                         }
                         promise.resolve(apps);
@@ -636,6 +638,63 @@ public class RNPlaytimeSdkModule extends ReactContextBaseJavaModule {
         } catch (PlaytimeNotInitializedException e) {
             Log.w("RNAdjoeSDK", e);
         }
+    }
+
+    @ReactMethod
+    public void isBoostedEvent(String packageName, ReadableMap event, final Promise promise) {
+        if (packageName == null) {
+            promise.reject(new NullPointerException("package name must not be null"));
+            return;
+        }
+
+        PlaytimePartnerApp partnerApp = PARTNER_APPS.get(packageName);
+
+        if (partnerApp == null) {
+            promise.reject(new NullPointerException(
+                    "no partner app found for package name " + packageName));
+            return;
+        }
+
+        PlaytimeAdvancePlusEvent playtimeAdvancePlusEvent = constructPlaytimeAdvancePlusEvent(event);
+        promise.resolve(partnerApp.isBoostedEvent(playtimeAdvancePlusEvent));
+    }
+
+    @ReactMethod
+    public void isBoostedEventExpired(String packageName, ReadableMap event, final Promise promise) {
+        if (packageName == null) {
+            promise.reject(new NullPointerException("package name must not be null"));
+            return;
+        }
+
+        PlaytimePartnerApp partnerApp = PARTNER_APPS.get(packageName);
+
+        if (partnerApp == null) {
+            promise.reject(new NullPointerException(
+                    "no partner app found for package name " + packageName));
+            return;
+        }
+
+        PlaytimeAdvancePlusEvent playtimeAdvancePlusEvent = constructPlaytimeAdvancePlusEvent(event);
+        promise.resolve(partnerApp.isBoostedEventExpired(playtimeAdvancePlusEvent));
+    }
+
+    @ReactMethod
+    public void timeToExpireBoostedEventInSeconds(String packageName, ReadableMap event, final Promise promise) {
+        if (packageName == null) {
+            promise.reject(new NullPointerException("package name must not be null"));
+            return;
+        }
+
+        PlaytimePartnerApp partnerApp = PARTNER_APPS.get(packageName);
+
+        if (partnerApp == null) {
+            promise.reject(new NullPointerException(
+                    "no partner app found for package name " + packageName));
+            return;
+        }
+
+        PlaytimeAdvancePlusEvent playtimeAdvancePlusEvent = constructPlaytimeAdvancePlusEvent(event);
+        promise.resolve((int) partnerApp.timeToExpireBoostedEventInSeconds(playtimeAdvancePlusEvent));
     }
 
     /* -----------------------------
@@ -856,6 +915,22 @@ public class RNPlaytimeSdkModule extends ReactContextBaseJavaModule {
         return new PlaytimeUserProfile(playtimeGender, birthday);
     }
 
+    private PlaytimeAdvancePlusEvent constructPlaytimeAdvancePlusEvent(ReadableMap event) {
+        JSONObject jsonObject = new JSONObject();
+        try {
+            jsonObject.put("Name", event.getString("name"));
+            jsonObject.put("Description", event.getString("description"));
+            jsonObject.put("Coins", event.getInt("coins"));
+            jsonObject.put("Type", 0);
+            jsonObject.put("RewardedAt", "");
+            jsonObject.put("TimedCoinsDuration", event.getInt("timedCoinsDurationInMin"));
+            jsonObject.put("TimedCoins", event.getInt("timedCoins"));
+            return new PlaytimeAdvancePlusEvent(jsonObject);
+        } catch (JSONException e) {
+            return null;
+        }
+    }
+
 
     // endregion helper method
 
@@ -955,6 +1030,8 @@ public class RNPlaytimeSdkModule extends ReactContextBaseJavaModule {
             eventMap.putString("name", event.getName());
             eventMap.putString("description", event.getDescription());
             eventMap.putInt("coins", event.getCoins());
+            eventMap.putInt("timedCoins", event.getTimedCoins());
+            eventMap.putInt("timedCoinsDurationInMin", (int) event.getTimedCoinsDuration());
 
             String rewardedAt = event.getRewardedAt();
             if (rewardedAt != null && !rewardedAt.isEmpty()) {

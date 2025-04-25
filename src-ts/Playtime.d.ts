@@ -4,6 +4,7 @@ import { PlaytimeUserProfile } from './PlaytimeUserProfile';
 import { PlaytimeReward } from './PlaytimeReward';
 
 declare namespace _default {
+    let EVENT_TEASER_SHOWN: number;
     function init(apiKey: string, options?: {
         userId?: string;
         playtimeParams?: PlaytimeParams;
@@ -21,9 +22,7 @@ declare namespace _default {
     function hasAcceptedTOS(): Promise<boolean>;
     function hasAcceptedUsagePermission(): Promise<boolean>;
     function getUserId(): Promise<string>;
-    function _a(b: any): Promise<void>;
-    function faceVerification(): Promise<void>;
-    function faceVerificationStatus(): Promise<void>;
+    function sendEvent(event: number, extra?: string, params?: PlaytimeParams, uaChannel?: string): Promise<void>;
 }
 export default _default;
 //# sourceMappingURL=Playtime.d.ts.map
