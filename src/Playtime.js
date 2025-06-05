@@ -85,5 +85,11 @@ export default {
   
   faceVerificationStatus: function() {
     return RNPlaytimeSdk.faceVerificationStatus();
-  }
+  },
+
+  sendEvent: function (event, extra = null, params = null, uaChannel = null) {
+    var playtimeParams = getPlaytimeParams(params, uaChannel)
+    return RNPlaytimeSdk.sendEvent(event, extra, playtimeParams)
+  },
+  EVENT_TEASER_SHOWN: RNPlaytimeSdk.EVENT_TEASER_SHOWN,
 };

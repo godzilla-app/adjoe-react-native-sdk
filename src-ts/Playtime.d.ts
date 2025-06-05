@@ -24,6 +24,13 @@ declare namespace _default {
     function _a(b: any): Promise<void>;
     function faceVerification(): Promise<void>;
     function faceVerificationStatus(): Promise<void>;
+    function sendEvent(
+      event: number,
+      extra: string | null,
+      params?: PlaytimeParams | null,
+      uaChannel?: string
+    ): void;
+    let EVENT_TEASER_SHOWN: number;
 }
 export default _default;
 //# sourceMappingURL=Playtime.d.ts.map
