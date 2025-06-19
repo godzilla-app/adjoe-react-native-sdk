@@ -39,6 +39,10 @@ export default {
     return RNPlaytimeSdk.showCatalog(playtimeParams);
   },
 
+  showCatalogWithOptions: function(options) {
+    return RNPlaytimeSdk.showCatalogWithOptions(options);
+  },
+
   requestRewards: function(params = null, uaChannel = null) {
     var playtimeParams = getPlaytimeParams(params, uaChannel);
     return RNPlaytimeSdk.requestRewards(playtimeParams);

@@ -2,6 +2,7 @@ import { PlaytimeParams } from './PlaytimeParams';
 import { PlaytimeExtension } from './PlaytimeExtension';
 import { PlaytimeUserProfile } from './PlaytimeUserProfile';
 import { PlaytimeReward } from './PlaytimeReward';
+import { PlaytimeOptions } from './PlaytimeOptions';
 
 declare namespace _default {
     let EVENT_TEASER_SHOWN: number;
@@ -13,6 +14,7 @@ declare namespace _default {
         playtimeUserProfile?: PlaytimeUserProfile;
     }, uaNetwork?: string, uaChannel?: string): Promise<void>;
     function showCatalog(params?: PlaytimeParams, uaChannel?: string): Promise<void>;
+    function showCatalogWithOptions(options: PlaytimeOptions): Promise<void>;
     function requestRewards(params?: PlaytimeParams, uaChannel?: string): Promise<PlaytimeReward>;
     function doPayout(params?: PlaytimeParams, uaChannel?: string): Promise<number>;
     function setUAParams(params: PlaytimeParams): Promise<void>;

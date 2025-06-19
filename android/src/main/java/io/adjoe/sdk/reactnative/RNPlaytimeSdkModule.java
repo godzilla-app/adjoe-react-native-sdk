@@ -58,6 +58,8 @@ import io.adjoe.sdk.custom.AppDetails;
 import io.adjoe.sdk.custom.CategoryTranslation;
 import io.adjoe.sdk.internal.PlaytimePartnerApp;
 import io.adjoe.sdk.internal.PlaytimePromoEvent;
+import io.adjoe.sdk.internal.TimedRewardMultiplierConfig;
+import io.adjoe.sdk.internal.TimedRewardMultiplierEvent;
 
 @SuppressWarnings("unused")
 public class RNPlaytimeSdkModule extends ReactContextBaseJavaModule {
@@ -136,31 +138,7 @@ public class RNPlaytimeSdkModule extends ReactContextBaseJavaModule {
     public void init(String apiKey, ReadableMap optionsMap, final Promise promise) {
         try {
             PlaytimeOptions options = new PlaytimeOptions();
-            if (optionsMap != null) {
-                if (optionsMap.hasKey("userId")) {
-                    options.setUserId(optionsMap.getString("userId"));
-                }
-                if (optionsMap.hasKey("applicationProcessName")) {
-                    options.setApplicationProcessName(optionsMap.getString("applicationProcessName"));
-                }
-                // get playtime params from options
-                if (optionsMap.hasKey("playtimeParams")) {
-                    ReadableMap paramsMap = optionsMap.getMap("playtimeParams");
-                    PlaytimeParams params = constructPlaytimeParams(paramsMap);
-                    options.setParams(params);
-                }
-                if (optionsMap.hasKey("playtimeExtension")) {
-                    ReadableMap extensionMap = optionsMap.getMap("playtimeExtension");
-                    PlaytimeExtensions extensions = constructPlaytimeExtension(extensionMap);
-                    options.setExtensions(extensions);
-                }
-                if (optionsMap.hasKey("playtimeUserProfile")) {
-                    ReadableMap userProfileMap = optionsMap.getMap("playtimeUserProfile");
-                    PlaytimeUserProfile userProfile = constructPlaytimeUserProfile(userProfileMap);
-                    options.setUserProfile(userProfile);
-                }
-            }
-            options.w("RN");
+            updateOptionsFromMap(optionsMap, options);
 
             Playtime.init(reactContext, apiKey, options, new PlaytimeInitialisationListener() {
 
@@ -203,6 +181,24 @@ public class RNPlaytimeSdkModule extends ReactContextBaseJavaModule {
             }
         } catch (Exception e) {
             Log.w("RNAdjoeSDK", e);
+            promise.reject(e);
+        }
+    }
+
+    @ReactMethod
+    public void showCatalogWithOptions(ReadableMap configMap, Promise promise) {
+        try {
+            PlaytimeOptions options = new PlaytimeOptions();
+            updateOptionsFromMap(configMap, options);
+            Activity localActivity = getCurrentActivity();
+            if (localActivity != null) {
+                Playtime.showCatalog(localActivity, options);
+                promise.resolve(null);
+            } else {
+                Log.w("RNAdjoeSDK","Can't load the catalog, activity is null");
+                promise.resolve(null);
+            }
+        } catch (PlaytimeException e) {
             promise.reject(e);
         }
     }
@@ -285,6 +281,41 @@ public class RNPlaytimeSdkModule extends ReactContextBaseJavaModule {
         }
         PlaytimeParams params = constructPlaytimeParams(paramsMap);
         PlaytimeCustom.requestPartnerApps(reactContext, webViewContainer, params,
+                new PlaytimeCampaignListener() {
+
+                    @Override
+                    public void onCampaignsReceived(
+                            PlaytimeCampaignResponse playtimeCampaignResponse) {
+                        WritableArray apps = Arguments.createArray();
+                        for (PlaytimePartnerApp app : playtimeCampaignResponse.partnerApps) {
+                            apps.pushMap(partnerAppToWritableMap(app));
+
+                            PARTNER_APPS.put(app.getPackageName(), app);
+                        }
+                        promise.resolve(apps);
+                    }
+
+                    @Override
+                    public void onCampaignsReceivedError(
+                            PlaytimeCampaignResponseError playtimeCampaignResponseError) {
+                        if (playtimeCampaignResponseError.exception != null) {
+                            promise.reject(playtimeCampaignResponseError.exception);
+                        } else {
+                            promise.reject("", "");
+                        }
+                    }
+                });
+    }
+
+    @ReactMethod
+    public void requestPartnerAppsWithOptions(ReadableMap optionsMap, final Promise promise) {
+        FrameLayout webViewContainer = null;
+        if (webViewSupplier != null) {
+            webViewContainer = webViewSupplier.getLayoutForWebView();
+        }
+        PlaytimeOptions options = new PlaytimeOptions();
+        updateOptionsFromMap(optionsMap, options);
+        PlaytimeCustom.requestPartnerApps(reactContext, webViewContainer, options,
                 new PlaytimeCampaignListener() {
 
                     @Override
@@ -934,6 +965,35 @@ public class RNPlaytimeSdkModule extends ReactContextBaseJavaModule {
 
     // endregion helper method
 
+    private void updateOptionsFromMap(ReadableMap optionsMap, PlaytimeOptions options) {
+        if (optionsMap != null) {
+            if (optionsMap.hasKey("userId")) {
+                options.setUserId(optionsMap.getString("userId"));
+            }
+            if (optionsMap.hasKey("applicationProcessName")) {
+                options.setApplicationProcessName(optionsMap.getString("applicationProcessName"));
+            }
+            // get playtime params from options
+            if (optionsMap.hasKey("playtimeParams")) {
+                ReadableMap paramsMap = optionsMap.getMap("playtimeParams");
+                PlaytimeParams params = constructPlaytimeParams(paramsMap);
+                options.setParams(params);
+            }
+            if (optionsMap.hasKey("playtimeExtension")) {
+                ReadableMap extensionMap = optionsMap.getMap("playtimeExtension");
+                PlaytimeExtensions extensions = constructPlaytimeExtension(extensionMap);
+                options.setExtensions(extensions);
+            }
+            if (optionsMap.hasKey("playtimeUserProfile")) {
+                ReadableMap userProfileMap = optionsMap.getMap("playtimeUserProfile");
+                PlaytimeUserProfile userProfile = constructPlaytimeUserProfile(userProfileMap);
+                options.setUserProfile(userProfile);
+            }
+        }
+
+        options.w("RN");
+    }
+
     private WritableMap partnerAppToWritableMap(PlaytimePartnerApp app) {
         WritableMap appMap = Arguments.createMap();
         appMap.putString("campaignType", app.getCampaignType());
@@ -973,6 +1033,54 @@ public class RNPlaytimeSdkModule extends ReactContextBaseJavaModule {
         }
 
         appMap.putArray("rewardConfig", rewardConfig);
+
+        WritableMap eventConfigs = Arguments.createMap();
+
+
+        WritableMap playtimeRewardMultiplierConfigMap = Arguments.createMap();
+        TimedRewardMultiplierConfig playtimeRewardMultiplierConfig = app.getTimedRewardMultiplierConfig();
+        if (playtimeRewardMultiplierConfig != null) {
+            playtimeRewardMultiplierConfigMap.putBoolean("isPlaytimeWithMultiplier", playtimeRewardMultiplierConfig.isPlaytimeWithMultiplier());
+
+            WritableArray eventsArray = Arguments.createArray();
+            List<TimedRewardMultiplierEvent> playtimeRewardMultiplierEvents = playtimeRewardMultiplierConfig.getEvents();
+            for (int i = 0; i < playtimeRewardMultiplierEvents.size(); i++) {
+                TimedRewardMultiplierEvent playtimeRewardMultiplierEvent = playtimeRewardMultiplierEvents.get(i);
+                WritableMap eventMap = Arguments.createMap();
+                eventMap.putString("eventName", playtimeRewardMultiplierEvent.getEventName());
+                eventMap.putInt("multiplierFactorPercentage", playtimeRewardMultiplierEvent.getMultiplierFactorPercentage());
+                eventMap.putInt("multiplierLevels", playtimeRewardMultiplierEvent.getMultiplierLevels());
+                eventMap.putString("description", playtimeRewardMultiplierEvent.getDescription());
+
+
+                TimedRewardMultiplierEvent.Status status = playtimeRewardMultiplierEvent.getStatus();
+                eventMap.putString("status", status != null ? status.getValue() : null);
+
+                if (playtimeRewardMultiplierEvent.getActivatedAt() != null) {
+                    long activateAt = playtimeRewardMultiplierEvent.getActivatedAt().getTime();
+                    eventMap.putDouble("activatedAt", activateAt);
+                } else {
+                    eventMap.putNull("activatedAt");
+                }
+
+                if (playtimeRewardMultiplierEvent.getLastUsedAt() != null) {
+                    long lastUsedAt = playtimeRewardMultiplierEvent.getLastUsedAt().getTime();
+                    eventMap.putDouble("lastUsedAt", lastUsedAt);
+                } else {
+                    eventMap.putNull("lastUsedAt");
+                }
+
+                eventMap.putInt("usedLevels", playtimeRewardMultiplierEvent.getUsedLevels());
+                eventsArray.pushMap(eventMap);
+            }
+
+            playtimeRewardMultiplierConfigMap.putArray("events", eventsArray);
+
+            eventConfigs.putMap("timeRewardMultiplierConfig", playtimeRewardMultiplierConfigMap);
+        }
+
+        appMap.putMap("eventConfigs", eventConfigs);
+
         // new
         appMap.putInt("advanceDailyLimit", app.getAdvanceDailyLimit());
         appMap.putInt("advanceTotalLimit", app.getAdvanceTotalLimit());
@@ -1032,6 +1140,8 @@ public class RNPlaytimeSdkModule extends ReactContextBaseJavaModule {
             eventMap.putInt("coins", event.getCoins());
             eventMap.putInt("timedCoins", event.getTimedCoins());
             eventMap.putInt("timedCoinsDurationInMin", (int) event.getTimedCoinsDuration());
+            eventMap.putInt("rewardsCount", event.getRewardsCount());
+            eventMap.putInt("completedRewards", event.getCompletedRewards());
 
             String rewardedAt = event.getRewardedAt();
             if (rewardedAt != null && !rewardedAt.isEmpty()) {
