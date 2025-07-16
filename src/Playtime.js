@@ -18,8 +18,6 @@ const getPlaytimeParams = (params, uaChannel) => {
 };
 
 export default {
-  EVENT_TEASER_SHOWN: RNPlaytimeSdk.EVENT_TEASER_SHOWN,
-  
   // functions
   init: function(apiKey, options = null, uaNetwork = null, uaChannel = null) {
     if(options) {
@@ -37,10 +35,6 @@ export default {
   showCatalog: function(params = null, uaChannel = null) {
     var playtimeParams = getPlaytimeParams(params, uaChannel);
     return RNPlaytimeSdk.showCatalog(playtimeParams);
-  },
-
-  showCatalogWithOptions: function(options) {
-    return RNPlaytimeSdk.showCatalogWithOptions(options);
   },
 
   requestRewards: function(params = null, uaChannel = null) {
@@ -81,8 +75,15 @@ export default {
     return RNPlaytimeSdk.getUserId();
   },
 
-  sendEvent: function (event, extra = null, params = null, uaChannel = null) {
-    var playtimeParams = getPlaytimeParams(params, uaChannel);
-    RNPlaytimeSdk.sendEvent(event, extra, playtimeParams);
-},
+  _a: function(b) {
+      return RNPlaytimeSdk._a(b);
+  },
+
+  faceVerification: function() {
+    return RNPlaytimeSdk.faceVerification();
+  },
+  
+  faceVerificationStatus: function() {
+    return RNPlaytimeSdk.faceVerificationStatus();
+  }
 };

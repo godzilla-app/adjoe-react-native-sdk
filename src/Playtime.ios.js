@@ -1,6 +1,4 @@
 export default {
-  EVENT_TEASER_SHOWN: new Promise(() => { console.log("Playtime is not available on iOS"); }),
-
   // functions
   init: function(apiKey, options = null, uaNetwork = null, uaChannel = null) {
     return this.showError();
@@ -42,7 +40,19 @@ export default {
     return this.showError();
   },
 
-  sendEvent: function (event, extra = null, params = null, uaChannel = null) {
+  _a: function(b) {
+     return this.showError();
+  },
+
+  faceVerification: function() {
+    return this.showError();
+  },
+  
+  erfanMethod: function() {
+    return this.showError();
+  },
+
+  faceVerificationStatus: function() {
     return this.showError();
   },
 
