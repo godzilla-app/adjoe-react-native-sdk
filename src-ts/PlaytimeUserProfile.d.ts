@@ -1,4 +1,5 @@
+export type PlaytimeGender = 'male' | 'female' | 'unknown';
 export interface PlaytimeUserProfile {
-    gender: string;
-    birthday: string;
+    gender?: PlaytimeGender | null;
+    birthday?: string | null;
 }

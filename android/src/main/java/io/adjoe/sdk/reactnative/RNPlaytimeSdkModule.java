@@ -1,10 +1,12 @@
 package io.adjoe.sdk.reactnative;
 
+import static io.adjoe.sdk.reactnative.Util.constructOptionsFrom;
+import static io.adjoe.sdk.reactnative.Util.constructPlaytimeParams;
+
 import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
-import android.text.TextUtils;
 import android.util.Log;
 import android.widget.FrameLayout;
 
@@ -24,7 +26,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.text.DateFormat;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -34,13 +35,10 @@ import java.util.Map;
 
 import io.adjoe.sdk.Playtime;
 import io.adjoe.sdk.PlaytimeException;
-import io.adjoe.sdk.PlaytimeExtensions;
-import io.adjoe.sdk.PlaytimeGender;
 import io.adjoe.sdk.PlaytimeInitialisationListener;
 import io.adjoe.sdk.PlaytimeNotInitializedException;
 import io.adjoe.sdk.PlaytimeOptions;
 import io.adjoe.sdk.PlaytimeParams;
-import io.adjoe.sdk.PlaytimeUserProfile;
 import io.adjoe.sdk.custom.PlaytimeAdvancePlusConfig;
 import io.adjoe.sdk.custom.PlaytimeAdvancePlusEvent;
 import io.adjoe.sdk.custom.PlaytimeCampaignListener;
@@ -137,8 +135,7 @@ public class RNPlaytimeSdkModule extends ReactContextBaseJavaModule {
     @ReactMethod
     public void init(String apiKey, ReadableMap optionsMap, final Promise promise) {
         try {
-            PlaytimeOptions options = new PlaytimeOptions();
-            updateOptionsFromMap(optionsMap, options);
+            PlaytimeOptions options = constructOptionsFrom(optionsMap);
 
             Playtime.init(reactContext, apiKey, options, new PlaytimeInitialisationListener() {
 
@@ -188,8 +185,7 @@ public class RNPlaytimeSdkModule extends ReactContextBaseJavaModule {
     @ReactMethod
     public void showCatalogWithOptions(ReadableMap configMap, Promise promise) {
         try {
-            PlaytimeOptions options = new PlaytimeOptions();
-            updateOptionsFromMap(configMap, options);
+            PlaytimeOptions options = constructOptionsFrom(configMap);
             Activity localActivity = getCurrentActivity();
             if (localActivity != null) {
                 Playtime.showCatalog(localActivity, options);
@@ -313,8 +309,8 @@ public class RNPlaytimeSdkModule extends ReactContextBaseJavaModule {
         if (webViewSupplier != null) {
             webViewContainer = webViewSupplier.getLayoutForWebView();
         }
-        PlaytimeOptions options = new PlaytimeOptions();
-        updateOptionsFromMap(optionsMap, options);
+
+        PlaytimeOptions options = constructOptionsFrom(optionsMap);
         PlaytimeCustom.requestPartnerApps(reactContext, webViewContainer, options,
                 new PlaytimeCampaignListener() {
 
@@ -890,61 +886,6 @@ public class RNPlaytimeSdkModule extends ReactContextBaseJavaModule {
     ----------------------------- */
 
     // region helper methods
-    private PlaytimeParams constructPlaytimeParams(ReadableMap paramsMap) {
-        PlaytimeParams.Builder builder = new PlaytimeParams.Builder();
-        if (paramsMap != null) {
-            if (paramsMap.hasKey("placement")) {
-                builder.setPlacement(paramsMap.getString("placement"));
-            }
-            if (paramsMap.hasKey("uaNetwork")) {
-                builder.setUaNetwork(paramsMap.getString("uaNetwork"));
-            }
-            if (paramsMap.hasKey("uaChannel")) {
-                builder.setUaChannel(paramsMap.getString("uaChannel"));
-            }
-            if (paramsMap.hasKey("uaSubPublisherCleartext")) {
-                builder.setUaSubPublisherCleartext(paramsMap.getString("uaSubPublisherCleartext"));
-            }
-            if (paramsMap.hasKey("uaSubPublisherEncrypted")) {
-                builder.setUaSubPublisherEncrypted(paramsMap.getString("uaSubPublisherEncrypted"));
-            }
-        }
-        return builder.build();
-    }
-
-    private PlaytimeExtensions constructPlaytimeExtension(ReadableMap extensionMap) {
-        PlaytimeExtensions.Builder extensions = new PlaytimeExtensions.Builder();
-        if (extensionMap == null) return extensions.build();
-        return extensions.setSubId1(extensionMap.getString("subId1"))
-                .setSubId2(extensionMap.getString("subId2"))
-                .setSubId3(extensionMap.getString("subId3"))
-                .setSubId4(extensionMap.getString("subId4"))
-                .setSubId5(extensionMap.getString("subId5"))
-                .build();
-    }
-
-    private PlaytimeUserProfile constructPlaytimeUserProfile(ReadableMap userProfileMap) {
-        if (userProfileMap == null) return null;
-        String gender = userProfileMap.getString("gender");
-        PlaytimeGender playtimeGender;
-        if ("male".equalsIgnoreCase(gender)) {
-            playtimeGender = PlaytimeGender.MALE;
-        } else if ("female".equalsIgnoreCase(gender)) {
-            playtimeGender = PlaytimeGender.FEMALE;
-        } else {
-            playtimeGender = PlaytimeGender.UNKNOWN;
-        }
-
-        String birthdate = userProfileMap.getString("birthday");
-        Date birthday = null;
-        if (!TextUtils.isEmpty(birthdate)) {
-            try {
-                birthday = DateFormat.getDateInstance().parse(birthdate);
-            } catch (ParseException ignore) {
-            }
-        }
-        return new PlaytimeUserProfile(playtimeGender, birthday);
-    }
 
     private PlaytimeAdvancePlusEvent constructPlaytimeAdvancePlusEvent(ReadableMap event) {
         JSONObject jsonObject = new JSONObject();
@@ -960,38 +901,6 @@ public class RNPlaytimeSdkModule extends ReactContextBaseJavaModule {
         } catch (JSONException e) {
             return null;
         }
-    }
-
-
-    // endregion helper method
-
-    private void updateOptionsFromMap(ReadableMap optionsMap, PlaytimeOptions options) {
-        if (optionsMap != null) {
-            if (optionsMap.hasKey("userId")) {
-                options.setUserId(optionsMap.getString("userId"));
-            }
-            if (optionsMap.hasKey("applicationProcessName")) {
-                options.setApplicationProcessName(optionsMap.getString("applicationProcessName"));
-            }
-            // get playtime params from options
-            if (optionsMap.hasKey("playtimeParams")) {
-                ReadableMap paramsMap = optionsMap.getMap("playtimeParams");
-                PlaytimeParams params = constructPlaytimeParams(paramsMap);
-                options.setParams(params);
-            }
-            if (optionsMap.hasKey("playtimeExtension")) {
-                ReadableMap extensionMap = optionsMap.getMap("playtimeExtension");
-                PlaytimeExtensions extensions = constructPlaytimeExtension(extensionMap);
-                options.setExtensions(extensions);
-            }
-            if (optionsMap.hasKey("playtimeUserProfile")) {
-                ReadableMap userProfileMap = optionsMap.getMap("playtimeUserProfile");
-                PlaytimeUserProfile userProfile = constructPlaytimeUserProfile(userProfileMap);
-                options.setUserProfile(userProfile);
-            }
-        }
-
-        options.w("RN");
     }
 
     private WritableMap partnerAppToWritableMap(PlaytimePartnerApp app) {

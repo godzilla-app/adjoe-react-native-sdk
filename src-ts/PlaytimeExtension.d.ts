@@ -1,7 +1,8 @@
+
 export interface PlaytimeExtension {
-    subId1: string;
-    subId2: string;
-    subId3: string;
-    subId4: string;
-    subId5: string;
+    subId1?: string | null;
+    subId2?: string | null;
+    subId3?: string | null;
+    subId4?: string | null;
+    subId5?: string | null;
 }

@@ -18,7 +18,7 @@ const getPlaytimeParams = (params, uaChannel) => {
 };
 
 export default {
-  EVENT_TEASER_SHOWN: RNPlaytimeSdk.EVENT_TEASER_SHOWN,
+  EVENT_TEASER_SHOWN: RNPlaytimeSdk ? RNPlaytimeSdk.EVENT_TEASER_SHOWN : "Not available",
   
   // functions
   init: function(apiKey, options = null, uaNetwork = null, uaChannel = null) {

@@ -1,7 +1,7 @@
 export interface PlaytimeParams {
-    uaNetwork?: string;
-    uaChannel?: string;
-    uaSubPublisherCleartext?: string;
-    uaSubPublisherEncrypted?: string;
-    placement?: string;
+    uaNetwork?: string | null;
+    uaChannel?: string | null;
+    uaSubPublisherEncrypted?: string | null;
+    uaSubPublisherCleartext?: string | null;
+    placement?: string | null;
 }
