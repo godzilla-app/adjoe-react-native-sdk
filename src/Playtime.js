@@ -43,16 +43,6 @@ export default {
     return RNPlaytimeSdk.showCatalogWithOptions(options);
   },
 
-  requestRewards: function(params = null, uaChannel = null) {
-    var playtimeParams = getPlaytimeParams(params, uaChannel);
-    return RNPlaytimeSdk.requestRewards(playtimeParams);
-  },
-
-  doPayout: function(params = null, uaChannel = null) {
-    var playtimeParams = getPlaytimeParams(params, uaChannel);
-    return RNPlaytimeSdk.doPayout(playtimeParams);
-  },
-
   setUAParams: function (params) {
     return RNPlaytimeSdk.setUAParams(params);
   },

@@ -14,7 +14,7 @@ RCT_EXPORT_MODULE(PlaytimeStudio)
 - (NSDictionary *)constantsToExport
 {
   return @{
-    @"VERSION": @"4.0.0-beta.2",
+    @"VERSION": @"4.0.0-beta.3",
   };
 }
 

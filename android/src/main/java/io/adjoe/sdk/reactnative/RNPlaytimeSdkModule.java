@@ -46,11 +46,9 @@ import io.adjoe.sdk.custom.PlaytimeCampaignResponse;
 import io.adjoe.sdk.custom.PlaytimeCampaignResponseError;
 import io.adjoe.sdk.custom.PlaytimeCoinSetting;
 import io.adjoe.sdk.custom.PlaytimeCustom;
-import io.adjoe.sdk.custom.PlaytimePayoutError;
-import io.adjoe.sdk.custom.PlaytimePayoutListener;
-import io.adjoe.sdk.custom.PlaytimeRewardListener;
-import io.adjoe.sdk.custom.PlaytimeRewardResponse;
-import io.adjoe.sdk.custom.PlaytimeRewardResponseError;
+import io.adjoe.sdk.custom.PlaytimeInAppPurchaseReward;
+import io.adjoe.sdk.custom.PlaytimeInAppPurchaseRewardConfig;
+import io.adjoe.sdk.custom.PlaytimeInAppPurchaseRewardEvent;
 import io.adjoe.sdk.custom.PlaytimeStreakInfo;
 import io.adjoe.sdk.custom.AppDetails;
 import io.adjoe.sdk.custom.CategoryTranslation;
@@ -88,9 +86,6 @@ public class RNPlaytimeSdkModule extends ReactContextBaseJavaModule {
     @Override
     public Map<String, Object> getConstants() {
         Map<String, Object> constants = new HashMap<>();
-        constants.put("PAYOUT_NOT_ENOUGH_COINS", PlaytimePayoutError.NOT_ENOUGH_COINS);
-        constants.put("PAYOUT_TOS_NOT_ACCEPTED", PlaytimePayoutError.TOS_NOT_ACCEPTED);
-        constants.put("PAYOUT_UNKNOWN", PlaytimePayoutError.UNKNOWN);
         constants.put("VERSION", Playtime.getVersion());
         constants.put("VERSION_NAME", Playtime.getVersionName());
         constants.put("EVENT_AGB_SHOWN", PlaytimeCustom.EVENT_AGB_SHOWN);
@@ -200,60 +195,6 @@ public class RNPlaytimeSdkModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void requestRewards(ReadableMap paramsMap, final Promise promise) {
-        PlaytimeParams params = constructPlaytimeParams(paramsMap);
-        PlaytimeCustom.requestRewards(reactContext, params, new PlaytimeRewardListener() {
-
-            @Override
-            public void onUserReceivesReward(PlaytimeRewardResponse playtimeRewardResponse) {
-                if (playtimeRewardResponse != null) {
-                    WritableMap map = Arguments.createMap();
-                    map.putInt("reward", playtimeRewardResponse.reward);
-                    map.putInt("alreadySpent", playtimeRewardResponse.alreadySpentCoins);
-                    map.putInt("availableForPayout",
-                            playtimeRewardResponse.availablePayoutCoins);
-                    promise.resolve(map);
-                } else { // should never happen
-                    promise.resolve(null);
-                }
-            }
-
-            @Override
-            public void onUserReceivesRewardError(
-                    PlaytimeRewardResponseError playtimeRewardResponseError) {
-                if (playtimeRewardResponseError != null
-                        && playtimeRewardResponseError.exception != null) {
-                    promise.reject(playtimeRewardResponseError.exception);
-                } else { // should never happen
-                    promise.reject("", "");
-                }
-            }
-        });
-    }
-
-    @ReactMethod
-    public void doPayout(ReadableMap paramsMap, final Promise promise) {
-        PlaytimeParams params = constructPlaytimeParams(paramsMap);
-        PlaytimeCustom.doPayout(reactContext, params, new PlaytimePayoutListener() {
-
-            @Override
-            public void onPayoutExecuted(int i) {
-                promise.resolve(i);
-            }
-
-            @Override
-            public void onPayoutError(PlaytimePayoutError playtimePayoutError) {
-                if (playtimePayoutError != null) {
-                    promise.reject(String.valueOf(playtimePayoutError.getReason()), "",
-                            playtimePayoutError.getException());
-                } else { // should never happen
-                    promise.reject("", "");
-                }
-            }
-        });
-    }
-
-    @ReactMethod
     public void setUAParams(ReadableMap paramsMap, final Promise promise) {
         PlaytimeParams params = constructPlaytimeParams(paramsMap);
         Playtime.setUAParams(reactContext, params);
@@ -301,6 +242,12 @@ public class RNPlaytimeSdkModule extends ReactContextBaseJavaModule {
                         }
                     }
                 });
+    }
+
+    @ReactMethod
+    public void getTestGroup(final Promise promise) {
+        Integer testGroup = PlaytimeCustom.getTestGroup(reactContext);
+        promise.resolve(testGroup);
     }
 
     @ReactMethod
@@ -919,6 +866,15 @@ public class RNPlaytimeSdkModule extends ReactContextBaseJavaModule {
         appMap.putString("category", app.getAppCategory());
         appMap.putString("portraitImageUrl", app.getPortraitImageURL());
         appMap.putString("portraitVideoUrl", app.getPortraitVideoURL());
+        appMap.putString("promotionTargetingType", app.getPromotionTargetingType());
+
+        int rewardingExpiresAfter = app.getRewardingExpiresAfter();
+        if (rewardingExpiresAfter == -1) {
+            appMap.putNull("rewardingExpiresAfter");
+        } else {
+            appMap.putInt("rewardingExpiresAfter", rewardingExpiresAfter);
+        }
+
         AppDetails appDetails = app.getAppDetails();
         if (appDetails != null) {
             appMap.putMap("appDetails", appDetailsToWritableMap(appDetails));
@@ -947,7 +903,9 @@ public class RNPlaytimeSdkModule extends ReactContextBaseJavaModule {
 
 
         WritableMap playtimeRewardMultiplierConfigMap = Arguments.createMap();
+        WritableMap playtimeInAppPurchaseRewardConfigMap = Arguments.createMap();
         TimedRewardMultiplierConfig playtimeRewardMultiplierConfig = app.getTimedRewardMultiplierConfig();
+        PlaytimeInAppPurchaseRewardConfig playtimeInAppPurchaseRewardConfig = app.getInAppPurchaseRewardConfig();
         if (playtimeRewardMultiplierConfig != null) {
             playtimeRewardMultiplierConfigMap.putBoolean("isPlaytimeWithMultiplier", playtimeRewardMultiplierConfig.isPlaytimeWithMultiplier());
 
@@ -986,6 +944,71 @@ public class RNPlaytimeSdkModule extends ReactContextBaseJavaModule {
             playtimeRewardMultiplierConfigMap.putArray("events", eventsArray);
 
             eventConfigs.putMap("timeRewardMultiplierConfig", playtimeRewardMultiplierConfigMap);
+        }
+        if (playtimeInAppPurchaseRewardConfig != null) {
+            playtimeInAppPurchaseRewardConfigMap.putString(
+                "description", playtimeInAppPurchaseRewardConfig.getDescription()
+            );
+
+            if (playtimeInAppPurchaseRewardConfig.getExchangeRate() != null)  {
+                playtimeInAppPurchaseRewardConfigMap.putDouble(
+                    "exchangeRate", playtimeInAppPurchaseRewardConfig.getExchangeRate()
+                );
+            } else {
+                playtimeInAppPurchaseRewardConfigMap.putNull("exchangeRate");
+            }
+
+            if (playtimeInAppPurchaseRewardConfig.getMaxLimitPerCampaignUSD() != null) {
+                playtimeInAppPurchaseRewardConfigMap.putDouble(
+                    "maxLimitPerCampaignUSD", playtimeInAppPurchaseRewardConfig.getMaxLimitPerCampaignUSD()
+                );
+            } else {
+                playtimeInAppPurchaseRewardConfigMap.putNull("maxLimitPerCampaignUSD");
+            }
+
+            if (playtimeInAppPurchaseRewardConfig.getMaxLimitPerCampaignCoins() != null) {
+                playtimeInAppPurchaseRewardConfigMap.putDouble(
+                    "maxLimitPerCampaignCoins", playtimeInAppPurchaseRewardConfig.getMaxLimitPerCampaignCoins()
+                );
+            } else {
+                playtimeInAppPurchaseRewardConfigMap.putNull("maxLimitPerCampaignCoins");
+            }
+
+            WritableMap completedRewardsMap = Arguments.createMap();
+            WritableMap pendingRewardsMap = Arguments.createMap();
+            PlaytimeInAppPurchaseReward completedRewardsConfig
+                = playtimeInAppPurchaseRewardConfig.getCompletedRewards();
+            PlaytimeInAppPurchaseReward pendingRewardsConfig
+                = playtimeInAppPurchaseRewardConfig.getPendingRewards();
+
+            if (completedRewardsConfig != null) {
+                if (completedRewardsConfig.getTotalCoins() != null) {
+                    completedRewardsMap.putInt("totalCoins", completedRewardsConfig.getTotalCoins());
+                } else {
+                    completedRewardsMap.putNull("totalCoins");
+                }
+
+                WritableArray completedRewardsEventsArray = createInAppPurchaseReward(completedRewardsConfig);
+                completedRewardsMap.putArray("events", completedRewardsEventsArray);
+                playtimeInAppPurchaseRewardConfigMap.putMap("completedRewards", completedRewardsMap);
+            } else {
+                playtimeInAppPurchaseRewardConfigMap.putNull("completedRewards");
+            }
+
+            if (pendingRewardsConfig != null) {
+                if (pendingRewardsConfig.getTotalCoins() != null) {
+                    pendingRewardsMap.putInt("totalCoins", pendingRewardsConfig.getTotalCoins());
+                } else {
+                    pendingRewardsMap.putNull("totalCoins");
+                }
+                WritableArray pendingRewardsEventsArray = createInAppPurchaseReward(pendingRewardsConfig);
+                pendingRewardsMap.putArray("events", pendingRewardsEventsArray);
+                playtimeInAppPurchaseRewardConfigMap.putMap("pendingRewards", pendingRewardsMap);
+            } else {
+                playtimeInAppPurchaseRewardConfigMap.putNull("pendingRewards");
+            }
+
+            eventConfigs.putMap("inAppPurchaseRewardConfig", playtimeInAppPurchaseRewardConfigMap);
         }
 
         appMap.putMap("eventConfigs", eventConfigs);
@@ -1037,6 +1060,39 @@ public class RNPlaytimeSdkModule extends ReactContextBaseJavaModule {
             appMap.putMap("advancePlusConfig", advancePlusConfigMap);
         }
         return appMap;
+    }
+
+    private WritableArray createInAppPurchaseReward(PlaytimeInAppPurchaseReward rewardsConfig) {
+        WritableArray rewardsEventsArray = Arguments.createArray();
+        List<PlaytimeInAppPurchaseRewardEvent> rewardsEvents = rewardsConfig.getEvents();
+
+        for (int i = 0; i < rewardsEvents.size(); i++) {
+            PlaytimeInAppPurchaseRewardEvent rewardEvent = rewardsEvents.get(i);
+            WritableMap eventMap = Arguments.createMap();
+            if (rewardEvent.getCoins() != null) {
+                eventMap.putInt("coins", rewardEvent.getCoins());
+            } else {
+                eventMap.putNull("coins");
+            }
+
+            if (rewardEvent.getProcessAt() != null) {
+                long processAt = rewardEvent.getProcessAt().getTime();
+                eventMap.putDouble("processAt", processAt);
+            } else {
+                eventMap.putNull("processAt");
+            }
+
+            if (rewardEvent.getReceivedAt() != null) {
+                long receivedAt = rewardEvent.getReceivedAt().getTime();
+                eventMap.putDouble("receivedAt", receivedAt);
+            } else {
+                eventMap.putNull("receivedAt");
+            }
+
+            rewardsEventsArray.pushMap(eventMap);
+        }
+
+        return rewardsEventsArray;
     }
 
     private WritableArray createEventsWritableArray(List<PlaytimeAdvancePlusEvent> events) {
