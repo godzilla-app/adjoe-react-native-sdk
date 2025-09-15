@@ -35,4 +35,29 @@ RCT_EXPORT_METHOD(
     }];
 }
 
+RCT_EXPORT_METHOD(
+    setPlaytimeOptions:(NSDictionary *)paramsDictionary
+    resolve:(RCTPromiseResolveBlock)resolve
+    reject:(RCTPromiseRejectBlock)reject)
+{
+    NSError *error = nil;
+    PlaytimeOptions *playtimeOptions = [[PlaytimeOptions alloc] initWithJSONObject:paramsDictionary error:&error];
+    
+    if (playtimeOptions == nil || error != nil) {
+        reject(@"playtime_error", @"Invalid parameters for setPlaytimeOptions", error);
+        return;
+    }
+    
+    [Playtime setPlaytimeOptionsWithOptions:playtimeOptions
+                completionHandler:^(NSError * _Nullable error) {
+        if (error != nil) {
+            RCTLogError(@"Error setting Playtime options: %@", error);
+            reject(@"playtime_error", @"Playtime options error", error);
+            return;
+        }
+        
+        resolve(nil);
+    }];
+}
+
 @end

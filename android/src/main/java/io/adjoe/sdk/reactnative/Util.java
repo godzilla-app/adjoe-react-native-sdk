@@ -102,6 +102,13 @@ public class Util {
                 PlaytimeUserProfile userProfile = constructPlaytimeUserProfile(userProfileMap);
                 options.setUserProfile(userProfile);
             }
+
+            if (optionsMap.hasKey("sdkHash")) {
+                String sdkHash = optionsMap.getString("sdkHash");
+                if (sdkHash != null) {
+                    options.setSDKHash(sdkHash);
+                }
+            }
         }
         options.w("RN");
 

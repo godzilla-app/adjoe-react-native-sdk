@@ -54,6 +54,14 @@ declare namespace _default {
     function showCatalogWithOptions(options: PlaytimeOptions): Promise<void>;
 
     /**
+     * Sets the Playtime options.
+     * 
+     * Supported on both Android and iOS.
+     * @param options An object to pass additional options.
+     */
+    function setPlaytimeOptions(options: PlaytimeOptions): Promise<void>;
+
+    /**
      * Sets the User-Acquisition (UA) parameters.
      * 
      * Supported only on Android.

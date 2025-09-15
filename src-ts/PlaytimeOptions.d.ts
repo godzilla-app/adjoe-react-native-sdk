@@ -12,6 +12,11 @@ export interface PlaytimeOptions {
     userId?: string | null;
 
     /**
+     * The SDK hash for initialization.
+     */
+    sdkHash?: string | null;
+
+    /**
      * User profile for targeting.
      */
     userProfile?: PlaytimeUserProfile | null;

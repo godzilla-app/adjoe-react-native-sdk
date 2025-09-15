@@ -43,6 +43,10 @@ export default {
     return RNPlaytimeSdk.showCatalogWithOptions(options);
   },
 
+  setPlaytimeOptions: function(options) {
+    return RNPlaytimeSdk.setPlaytimeOptions(options);
+  },
+
   setUAParams: function (params) {
     return RNPlaytimeSdk.setUAParams(params);
   },

@@ -38,6 +38,7 @@ import io.adjoe.sdk.PlaytimeException;
 import io.adjoe.sdk.PlaytimeInitialisationListener;
 import io.adjoe.sdk.PlaytimeNotInitializedException;
 import io.adjoe.sdk.PlaytimeOptions;
+import io.adjoe.sdk.PlaytimeOptionsListener;
 import io.adjoe.sdk.PlaytimeParams;
 import io.adjoe.sdk.custom.PlaytimeAdvancePlusConfig;
 import io.adjoe.sdk.custom.PlaytimeAdvancePlusEvent;
@@ -199,6 +200,22 @@ public class RNPlaytimeSdkModule extends ReactContextBaseJavaModule {
         PlaytimeParams params = constructPlaytimeParams(paramsMap);
         Playtime.setUAParams(reactContext, params);
         promise.resolve(null);
+    }
+
+    @ReactMethod
+    public void setPlaytimeOptions(ReadableMap paramsMap, final Promise promise) {
+        PlaytimeOptions options = constructOptionsFrom(paramsMap);
+        Playtime.setPlaytimeOptions(options, new PlaytimeOptionsListener() {
+            @Override
+            public void onSuccess() {
+                promise.resolve(null);
+            }
+
+            @Override
+            public void onError(String error) {
+                promise.reject(error);
+            }
+        });
     }
 
 
