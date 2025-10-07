@@ -24,7 +24,5 @@ return Collections.emptyList();
 
 @Override
 public List<NativeModule> createNativeModules(ReactApplicationContext reactContext){
-return Arrays.<NativeModule> asList(
-    new RNPlaytimeSdkModule(reactContext),
-    new RNPlaytimeStudio(reactContext)
+return Arrays.<NativeModule> asList(new RNPlaytimeSdkModule(reactContext)
 );}}

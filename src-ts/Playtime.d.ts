@@ -1,6 +1,7 @@
 import { PlaytimeParams } from './PlaytimeParams';
 import { PlaytimeExtension } from './PlaytimeExtension';
 import { PlaytimeUserProfile } from './PlaytimeUserProfile';
+import { PlaytimeReward } from './PlaytimeReward';
 import { PlaytimeOptions } from './PlaytimeOptions';
 
 /**
@@ -54,12 +55,29 @@ declare namespace _default {
     function showCatalogWithOptions(options: PlaytimeOptions): Promise<void>;
 
     /**
-     * Sets the Playtime options.
+     * Requests the user's current rewards, including how many of them are available for payout
+     * and how many have already been paid out.
      * 
-     * Supported on both Android and iOS.
-     * @param options An object to pass additional options.
+     * Supported only on Android.
+     * @param params The PlaytimeParams that holds the user acquisition (UA) paramaters and
+     * placement (optional).
+     * @param uaChannel The uaChannel value.
+     * @deprecated
+     * @returns The playtime reward response.
      */
-    function setPlaytimeOptions(options: PlaytimeOptions): Promise<void>;
+    function requestRewards(params?: PlaytimeParams, uaChannel?: string): Promise<PlaytimeReward>;
+    
+    /**
+     * Pays out the user's collected rewards.
+     * 
+     * Supported only on Android.
+     * @param params The PlaytimeParams that holds the user acquisition (UA) paramaters and
+     * placement (optional).
+     * @param uaChannel The uaChannel value.
+     * @deprecated
+     * @returns The user's collected rewards.
+     */
+    function doPayout(params?: PlaytimeParams, uaChannel?: string): Promise<number>;
 
     /**
      * Sets the User-Acquisition (UA) parameters.
