@@ -1,11 +1,13 @@
 {
   "name": "react-native-adjoe-sdk",
-  "version": "3.4.0",
-  "description": "",
+  "description": "React Native adjoe SDK",
+  "version": "4.1.0",
   "main": "src/index.js",
   "types": "src-ts/index.d.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build-docs-basic": "./bash/predocs.sh && npx typedoc Playtime src-ts/Playtime.d.ts --out ./docs/basic && ./bash/postdocs.sh basic",
+    "build-docs-studio": "./bash/predocs.sh && npx typedoc Playtime src-ts/Playtime.d.ts src-ts/PlaytimeStudio.d.ts --out ./docs/studio && ./bash/postdocs.sh studio"
   },
   "keywords": [
     "react-native"

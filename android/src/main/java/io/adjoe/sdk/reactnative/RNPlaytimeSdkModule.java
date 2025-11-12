@@ -1,13 +1,17 @@
 package io.adjoe.sdk.reactnative;
 
+import static io.adjoe.sdk.reactnative.Util.statusToReadableMap;
+import static io.adjoe.sdk.reactnative.Util.constructOptionsFrom;
+import static io.adjoe.sdk.reactnative.Util.constructPlaytimeParams;
+
 import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
-import android.text.TextUtils;
 import android.util.Log;
 import android.widget.FrameLayout;
 
+import androidx.annotation.NonNull;
 import androidx.fragment.app.FragmentActivity;
 
 import com.facebook.react.bridge.Arguments;
@@ -18,13 +22,11 @@ import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
-import com.google.android.gms.common.api.GoogleApiClient;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.text.DateFormat;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -34,13 +36,12 @@ import java.util.Map;
 
 import io.adjoe.sdk.Playtime;
 import io.adjoe.sdk.PlaytimeException;
-import io.adjoe.sdk.PlaytimeExtensions;
-import io.adjoe.sdk.PlaytimeGender;
+import io.adjoe.sdk.PlaytimeStatus;
 import io.adjoe.sdk.PlaytimeInitialisationListener;
 import io.adjoe.sdk.PlaytimeNotInitializedException;
 import io.adjoe.sdk.PlaytimeOptions;
+import io.adjoe.sdk.PlaytimeOptionsListener;
 import io.adjoe.sdk.PlaytimeParams;
-import io.adjoe.sdk.PlaytimeUserProfile;
 import io.adjoe.sdk.custom.PlaytimeAdvancePlusConfig;
 import io.adjoe.sdk.custom.PlaytimeAdvancePlusEvent;
 import io.adjoe.sdk.custom.PlaytimeCampaignListener;
@@ -51,11 +52,6 @@ import io.adjoe.sdk.custom.PlaytimeCustom;
 import io.adjoe.sdk.custom.PlaytimeInAppPurchaseReward;
 import io.adjoe.sdk.custom.PlaytimeInAppPurchaseRewardConfig;
 import io.adjoe.sdk.custom.PlaytimeInAppPurchaseRewardEvent;
-import io.adjoe.sdk.custom.PlaytimePayoutError;
-import io.adjoe.sdk.custom.PlaytimePayoutListener;
-import io.adjoe.sdk.custom.PlaytimeRewardListener;
-import io.adjoe.sdk.custom.PlaytimeRewardResponse;
-import io.adjoe.sdk.custom.PlaytimeRewardResponseError;
 import io.adjoe.sdk.custom.PlaytimeStreakInfo;
 import io.adjoe.sdk.custom.AppDetails;
 import io.adjoe.sdk.custom.CategoryTranslation;
@@ -93,9 +89,6 @@ public class RNPlaytimeSdkModule extends ReactContextBaseJavaModule {
     @Override
     public Map<String, Object> getConstants() {
         Map<String, Object> constants = new HashMap<>();
-        constants.put("PAYOUT_NOT_ENOUGH_COINS", PlaytimePayoutError.NOT_ENOUGH_COINS);
-        constants.put("PAYOUT_TOS_NOT_ACCEPTED", PlaytimePayoutError.TOS_NOT_ACCEPTED);
-        constants.put("PAYOUT_UNKNOWN", PlaytimePayoutError.UNKNOWN);
         constants.put("VERSION", Playtime.getVersion());
         constants.put("VERSION_NAME", Playtime.getVersionName());
         constants.put("EVENT_AGB_SHOWN", PlaytimeCustom.EVENT_AGB_SHOWN);
@@ -140,8 +133,7 @@ public class RNPlaytimeSdkModule extends ReactContextBaseJavaModule {
     @ReactMethod
     public void init(String apiKey, ReadableMap optionsMap, final Promise promise) {
         try {
-            PlaytimeOptions options = new PlaytimeOptions();
-            updateOptionsFromMap(optionsMap, options);
+            PlaytimeOptions options = constructOptionsFrom(optionsMap);
 
             Playtime.init(reactContext, apiKey, options, new PlaytimeInitialisationListener() {
 
@@ -191,8 +183,7 @@ public class RNPlaytimeSdkModule extends ReactContextBaseJavaModule {
     @ReactMethod
     public void showCatalogWithOptions(ReadableMap configMap, Promise promise) {
         try {
-            PlaytimeOptions options = new PlaytimeOptions();
-            updateOptionsFromMap(configMap, options);
+            PlaytimeOptions options = constructOptionsFrom(configMap);
             Activity localActivity = getCurrentActivity();
             if (localActivity != null) {
                 Playtime.showCatalog(localActivity, options);
@@ -207,64 +198,26 @@ public class RNPlaytimeSdkModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void requestRewards(ReadableMap paramsMap, final Promise promise) {
-        PlaytimeParams params = constructPlaytimeParams(paramsMap);
-        PlaytimeCustom.requestRewards(reactContext, params, new PlaytimeRewardListener() {
-
-            @Override
-            public void onUserReceivesReward(PlaytimeRewardResponse playtimeRewardResponse) {
-                if (playtimeRewardResponse != null) {
-                    WritableMap map = Arguments.createMap();
-                    map.putInt("reward", playtimeRewardResponse.reward);
-                    map.putInt("alreadySpent", playtimeRewardResponse.alreadySpentCoins);
-                    map.putInt("availableForPayout",
-                            playtimeRewardResponse.availablePayoutCoins);
-                    promise.resolve(map);
-                } else { // should never happen
-                    promise.resolve(null);
-                }
-            }
-
-            @Override
-            public void onUserReceivesRewardError(
-                    PlaytimeRewardResponseError playtimeRewardResponseError) {
-                if (playtimeRewardResponseError != null
-                        && playtimeRewardResponseError.exception != null) {
-                    promise.reject(playtimeRewardResponseError.exception);
-                } else { // should never happen
-                    promise.reject("", "");
-                }
-            }
-        });
-    }
-
-    @ReactMethod
-    public void doPayout(ReadableMap paramsMap, final Promise promise) {
-        PlaytimeParams params = constructPlaytimeParams(paramsMap);
-        PlaytimeCustom.doPayout(reactContext, params, new PlaytimePayoutListener() {
-
-            @Override
-            public void onPayoutExecuted(int i) {
-                promise.resolve(i);
-            }
-
-            @Override
-            public void onPayoutError(PlaytimePayoutError playtimePayoutError) {
-                if (playtimePayoutError != null) {
-                    promise.reject(String.valueOf(playtimePayoutError.getReason()), "",
-                            playtimePayoutError.getException());
-                } else { // should never happen
-                    promise.reject("", "");
-                }
-            }
-        });
-    }
-
-    @ReactMethod
     public void setUAParams(ReadableMap paramsMap, final Promise promise) {
         PlaytimeParams params = constructPlaytimeParams(paramsMap);
         Playtime.setUAParams(reactContext, params);
         promise.resolve(null);
+    }
+
+    @ReactMethod
+    public void setPlaytimeOptions(ReadableMap paramsMap, final Promise promise) {
+        PlaytimeOptions options = constructOptionsFrom(paramsMap);
+        Playtime.setPlaytimeOptions(options, new PlaytimeOptionsListener() {
+            @Override
+            public void onSuccess() {
+                promise.resolve(null);
+            }
+
+            @Override
+            public void onError(String error) {
+                promise.reject(error);
+            }
+        });
     }
 
 
@@ -322,8 +275,8 @@ public class RNPlaytimeSdkModule extends ReactContextBaseJavaModule {
         if (webViewSupplier != null) {
             webViewContainer = webViewSupplier.getLayoutForWebView();
         }
-        PlaytimeOptions options = new PlaytimeOptions();
-        updateOptionsFromMap(optionsMap, options);
+
+        PlaytimeOptions options = constructOptionsFrom(optionsMap);
         PlaytimeCustom.requestPartnerApps(reactContext, webViewContainer, options,
                 new PlaytimeCampaignListener() {
 
@@ -776,6 +729,13 @@ public class RNPlaytimeSdkModule extends ReactContextBaseJavaModule {
         promise.resolve(Playtime.getUserId(reactContext));
     }
 
+    @ReactMethod
+    public void getStatus(Promise promise) {
+        PlaytimeStatus status = Playtime.getStatus();
+        ReadableMap mapStatus = statusToReadableMap(status);
+        promise.resolve(mapStatus);
+    }
+
     /* -----------------------------
            UTILITY METHODS END
        ----------------------------- */
@@ -899,61 +859,6 @@ public class RNPlaytimeSdkModule extends ReactContextBaseJavaModule {
     ----------------------------- */
 
     // region helper methods
-    private PlaytimeParams constructPlaytimeParams(ReadableMap paramsMap) {
-        PlaytimeParams.Builder builder = new PlaytimeParams.Builder();
-        if (paramsMap != null) {
-            if (paramsMap.hasKey("placement")) {
-                builder.setPlacement(paramsMap.getString("placement"));
-            }
-            if (paramsMap.hasKey("uaNetwork")) {
-                builder.setUaNetwork(paramsMap.getString("uaNetwork"));
-            }
-            if (paramsMap.hasKey("uaChannel")) {
-                builder.setUaChannel(paramsMap.getString("uaChannel"));
-            }
-            if (paramsMap.hasKey("uaSubPublisherCleartext")) {
-                builder.setUaSubPublisherCleartext(paramsMap.getString("uaSubPublisherCleartext"));
-            }
-            if (paramsMap.hasKey("uaSubPublisherEncrypted")) {
-                builder.setUaSubPublisherEncrypted(paramsMap.getString("uaSubPublisherEncrypted"));
-            }
-        }
-        return builder.build();
-    }
-
-    private PlaytimeExtensions constructPlaytimeExtension(ReadableMap extensionMap) {
-        PlaytimeExtensions.Builder extensions = new PlaytimeExtensions.Builder();
-        if (extensionMap == null) return extensions.build();
-        return extensions.setSubId1(extensionMap.getString("subId1"))
-                .setSubId2(extensionMap.getString("subId2"))
-                .setSubId3(extensionMap.getString("subId3"))
-                .setSubId4(extensionMap.getString("subId4"))
-                .setSubId5(extensionMap.getString("subId5"))
-                .build();
-    }
-
-    private PlaytimeUserProfile constructPlaytimeUserProfile(ReadableMap userProfileMap) {
-        if (userProfileMap == null) return null;
-        String gender = userProfileMap.getString("gender");
-        PlaytimeGender playtimeGender;
-        if ("male".equalsIgnoreCase(gender)) {
-            playtimeGender = PlaytimeGender.MALE;
-        } else if ("female".equalsIgnoreCase(gender)) {
-            playtimeGender = PlaytimeGender.FEMALE;
-        } else {
-            playtimeGender = PlaytimeGender.UNKNOWN;
-        }
-
-        String birthdate = userProfileMap.getString("birthday");
-        Date birthday = null;
-        if (!TextUtils.isEmpty(birthdate)) {
-            try {
-                birthday = DateFormat.getDateInstance().parse(birthdate);
-            } catch (ParseException ignore) {
-            }
-        }
-        return new PlaytimeUserProfile(playtimeGender, birthday);
-    }
 
     private PlaytimeAdvancePlusEvent constructPlaytimeAdvancePlusEvent(ReadableMap event) {
         JSONObject jsonObject = new JSONObject();
@@ -969,38 +874,6 @@ public class RNPlaytimeSdkModule extends ReactContextBaseJavaModule {
         } catch (JSONException e) {
             return null;
         }
-    }
-
-
-    // endregion helper method
-
-    private void updateOptionsFromMap(ReadableMap optionsMap, PlaytimeOptions options) {
-        if (optionsMap != null) {
-            if (optionsMap.hasKey("userId")) {
-                options.setUserId(optionsMap.getString("userId"));
-            }
-            if (optionsMap.hasKey("applicationProcessName")) {
-                options.setApplicationProcessName(optionsMap.getString("applicationProcessName"));
-            }
-            // get playtime params from options
-            if (optionsMap.hasKey("playtimeParams")) {
-                ReadableMap paramsMap = optionsMap.getMap("playtimeParams");
-                PlaytimeParams params = constructPlaytimeParams(paramsMap);
-                options.setParams(params);
-            }
-            if (optionsMap.hasKey("playtimeExtension")) {
-                ReadableMap extensionMap = optionsMap.getMap("playtimeExtension");
-                PlaytimeExtensions extensions = constructPlaytimeExtension(extensionMap);
-                options.setExtensions(extensions);
-            }
-            if (optionsMap.hasKey("playtimeUserProfile")) {
-                ReadableMap userProfileMap = optionsMap.getMap("playtimeUserProfile");
-                PlaytimeUserProfile userProfile = constructPlaytimeUserProfile(userProfileMap);
-                options.setUserProfile(userProfile);
-            }
-        }
-
-        options.w("RN");
     }
 
     private WritableMap partnerAppToWritableMap(PlaytimePartnerApp app) {
@@ -1046,8 +919,8 @@ public class RNPlaytimeSdkModule extends ReactContextBaseJavaModule {
         }
 
         WritableArray rewardConfig = Arguments.createArray();
-        for (PlaytimePartnerApp.RewardLevel level : app.getRewardConfig()) {
-            rewardConfig.pushMap(rewardLevelToWritableMap(level));
+        for (Object level : app.getRewardConfig()) {
+            rewardConfig.pushMap(rewardLevelToWritableMap((PlaytimePartnerApp.RewardLevel) level));
         }
 
         appMap.putArray("rewardConfig", rewardConfig);
@@ -1104,10 +977,8 @@ public class RNPlaytimeSdkModule extends ReactContextBaseJavaModule {
             );
 
             if (playtimeInAppPurchaseRewardConfig.getExchangeRate() != null)  {
-                double exchangeRate = (double) playtimeInAppPurchaseRewardConfig.getExchangeRate();
                 playtimeInAppPurchaseRewardConfigMap.putDouble(
-                        "exchangeRate",
-                        Math.round(exchangeRate * 10.0) / 10.0 // keeps 1 decimal
+                    "exchangeRate", playtimeInAppPurchaseRewardConfig.getExchangeRate()
                 );
             } else {
                 playtimeInAppPurchaseRewardConfigMap.putNull("exchangeRate");
@@ -1320,7 +1191,5 @@ public class RNPlaytimeSdkModule extends ReactContextBaseJavaModule {
         FragmentActivity getFragmentActivity();
 
         Activity getActivity();
-
-        GoogleApiClient getGoogleApiClient();
     }
 }

@@ -1,8 +1,8 @@
 import { PlaytimeParams } from './PlaytimeParams';
 import { PlaytimeExtension } from './PlaytimeExtension';
 import { PlaytimeUserProfile } from './PlaytimeUserProfile';
-import { PlaytimeReward } from './PlaytimeReward';
 import { PlaytimeOptions } from './PlaytimeOptions';
+import { PlaytimeStatus } from './PlaytimeStatus';
 
 /**
  * The entry point of adjoe Playtime SDK.
@@ -55,29 +55,12 @@ declare namespace _default {
     function showCatalogWithOptions(options: PlaytimeOptions): Promise<void>;
 
     /**
-     * Requests the user's current rewards, including how many of them are available for payout
-     * and how many have already been paid out.
+     * Sets the Playtime options.
      * 
-     * Supported only on Android.
-     * @param params The PlaytimeParams that holds the user acquisition (UA) paramaters and
-     * placement (optional).
-     * @param uaChannel The uaChannel value.
-     * @deprecated
-     * @returns The playtime reward response.
+     * Supported on both Android and iOS.
+     * @param options An object to pass additional options.
      */
-    function requestRewards(params?: PlaytimeParams, uaChannel?: string): Promise<PlaytimeReward>;
-    
-    /**
-     * Pays out the user's collected rewards.
-     * 
-     * Supported only on Android.
-     * @param params The PlaytimeParams that holds the user acquisition (UA) paramaters and
-     * placement (optional).
-     * @param uaChannel The uaChannel value.
-     * @deprecated
-     * @returns The user's collected rewards.
-     */
-    function doPayout(params?: PlaytimeParams, uaChannel?: string): Promise<number>;
+    function setPlaytimeOptions(options: PlaytimeOptions): Promise<void>;
 
     /**
      * Sets the User-Acquisition (UA) parameters.
@@ -148,6 +131,14 @@ declare namespace _default {
      * @param uaChannel The uaChannel value.
      */
     function sendEvent(event: number, extra?: string, params?: PlaytimeParams, uaChannel?: string): Promise<void>;
+
+    /**
+     * Recieve the status of SDK.
+     * 
+     * Supported on Android and iOS.
+     * @returns The status of SDK.
+     */
+    function getStatus(): Promise<PlaytimeStatus>;
 }
 
 export { PlaytimeParams } from './PlaytimeParams';
@@ -155,6 +146,7 @@ export { PlaytimeExtension } from './PlaytimeExtension';
 export { PlaytimeUserProfile } from './PlaytimeUserProfile';
 export { PlaytimeReward } from './PlaytimeReward';
 export { PlaytimeOptions } from './PlaytimeOptions';
+export { PlaytimeStatus } from './PlaytimeStatus';
 
 export default _default;
 //# sourceMappingURL=Playtime.d.ts.map
